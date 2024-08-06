@@ -26,31 +26,31 @@ jobs:
           flutter-version: 3.22.2
 
       - run: flutter pub get
-        working-directory: ../provider_shopper
+        working-directory: provider_shopper/
 
       - run: rm -rf Pods/ Podfile.lock && pod install --repo-update
-        working-directory: ../provider_shopper/ios
+        working-directory: provider_shopper/ios
 
       - run: flutter build ios --release --no-codesign
-        working-directory: ../provider_shopper
+        working-directory: provider_shopper/
 
       - name: Create Payload directory
         run: rm -rf Payload && mkdir Payload
-        working-directory: ../provider_shopper/build/ios/iphoneos
+        working-directory: provider_shopper/build/ios/iphoneos
 
       - run: mv Runner.app/ Payload
-        working-directory: ../provider_shopper/build/ios/iphoneos
+        working-directory: provider_shopper/build/ios/iphoneos
 
       - name: Zip output
         run: zip -qq -r -9 shopper.ipa Payload
-        working-directory: ../provider_shopper/build/ios/iphoneos
+        working-directory: provider_shopper/build/ios/iphoneos
 
       # Upload generated ipa to project artifacts
       - name: Upload generated ipa to the artifacts
         uses: actions/upload-artifact@v4
         with:
           name: shopper.ipa
-          path: ../provider_shopper/build/ios/iphoneos/
+          path: provider_shopper/build/ios/iphoneos/
           retention-days: 1
           if-no-files-found: error
 
@@ -69,12 +69,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: shopper.ipa
-          path: ../provider_shopper/build/ios/iphoneos/
+          path: provider_shopper/build/ios/iphoneos/
 
       # Upload generated ipa to BrowserStack
       - name: Upload ipa to BrowserStack
         run: |
-          APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@../provider_shopper/build/ios/iphoneos/shopper.ipa" -F "custom_id=${{ env.IOS_APP_CUSTOM_ID }}")
+          APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@"provider_shopper/build/ios/iphoneos/shopper.ipa"" -F "custom_id="${{ env.IOS_APP_CUSTOM_ID }}"")
           echo $APP_UPLOAD_RESPONSE
           APP_URL=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
           if [ $APP_URL != null ]; then
