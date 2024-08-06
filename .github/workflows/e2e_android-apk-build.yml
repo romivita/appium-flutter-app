@@ -1,7 +1,7 @@
 name: Android-apk-build
 
 on:
-  # Triggers the workflow on push to branches named release/**, hotfix/** or develop
+  # Triggers the workflow on push to branches named release/**, hotfix/** o develop
   push:
     branches: [release/**, hotfix/**, develop]
 
@@ -25,45 +25,52 @@ jobs:
           channel: stable
           flutter-version: 3.22.2
 
-      - run: cd provider_shopper && flutter pub get
+      - name: Get Flutter dependencies
+        run: flutter pub get
+        working-directory: ../provider_shopper
 
-      - run: cd provider_shopper && flutter build apk --debug
+      - name: Build Android APK
+        run: flutter build apk --debug
+        working-directory: ../provider_shopper
 
-      # Upload generated apk to project artifacts
-      - name: Upload generated apk to the artifacts
+      - name: Upload generated APK to the artifacts
         uses: actions/upload-artifact@v4
         with:
           name: app-debug.apk
-          path: provider_shopper/build/app/outputs/flutter-apk/
+          path: ../provider_shopper/build/app/outputs/flutter-apk/
           retention-days: 1
 
   e2e-integrationqa-tests-android:
-      name: e2e integration qa tests
-      needs: build-android
-      runs-on: ubuntu-latest
-      steps:
-        # Checkout the code
-        - name: Checkout the code
-          uses: actions/checkout@v4
+    name: e2e integration qa tests
+    needs: build-android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
 
-        # Download apk from project artifacts
-        - name: Download apk from artifacts
-          id: download
-          uses: actions/download-artifact@v4
-          with:
-            name: app-debug.apk
-            path: provider_shopper/build/app/outputs/flutter-apk/
+      - name: Download APK from artifacts
+        id: download
+        uses: actions/download-artifact@v4
+        with:
+          name: app-debug.apk
+          path: ../provider_shopper/build/app/outputs/flutter-apk/
 
-        # Upload generated apk to BrowserStack
-        - name: Upload apk to BrowserStack
-          run: |
-            APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@"provider_shopper/build/app/outputs/flutter-apk/app-debug.apk"" -F "custom_id="${{ env.ANDROID_APP_CUSTOM_ID }}"")
-            echo $APP_UPLOAD_RESPONSE
-            APP_URL=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
-            if [ $APP_URL != null ]; then
-              echo "apk uploaded to BrowserStack with app: $APP_URL";
-            else
-              UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
-              echo "App upload failed, reason: "$UPLOAD_ERROR_MESSAGE
-              exit 1;
-            fi
+      - name: Upload APK to BrowserStack
+        run: |
+          APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@../provider_shopper/build/app/outputs/flutter-apk/app-debug.apk" -F "custom_id=${{ env.ANDROID_APP_CUSTOM_ID }}")
+          echo $APP_UPLOAD_RESPONSE
+          APP_URL=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
+          if [ $APP_URL != null ]; then
+            echo "apk uploaded to BrowserStack with app: $APP_URL";
+          else
+            UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
+            echo "App upload failed, reason: $UPLOAD_ERROR_MESSAGE"
+            exit 1;
+          fi
+
+      - name: Trigger Android tests
+          run: >
+            curl -X POST
+            --header "Accept: application/vnd.github.v3+json"
+            https://api.github.com/repos/romivita/shopper_app_testing/actions/workflows/run_regression_tests.yml/dispatches
+            --data '{"ref": "master","inputs": {"operating_system": "android"}}'
