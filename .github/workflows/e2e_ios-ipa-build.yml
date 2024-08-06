@@ -26,13 +26,13 @@ jobs:
           flutter-version: 3.22.2
 
       - run: flutter pub get
-        working-directory: provider_shopper/
+        working-directory: provider_shopper
 
       - run: rm -rf Pods/ Podfile.lock && pod install --repo-update
         working-directory: provider_shopper/ios
 
       - run: flutter build ios --release --no-codesign
-        working-directory: provider_shopper/
+        working-directory: provider_shopper
 
       - name: Create Payload directory
         run: rm -rf Payload && mkdir Payload
@@ -89,6 +89,7 @@ jobs:
       - name: Trigger iOS tests 
         run: |
           curl -X POST \
+            --user ${{ secrets.CI_ACTIONS_KEY }} \
             --header "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/romivita/shopper_app_testing/actions/workflows/run_regression_tests.yml/dispatches \
             --data '{"ref": "master","inputs": {"operating_system": "ios"}}'

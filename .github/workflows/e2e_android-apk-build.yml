@@ -71,6 +71,7 @@ jobs:
       - name: Trigger Android tests
         run: |
           curl -X POST \
+            --user ${{ secrets.CI_ACTIONS_KEY }} \
             --header "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/romivita/shopper_app_testing/actions/workflows/run_regression_tests.yml/dispatches \
             --data '{"ref": "master","inputs": {"operating_system": "android"}}'
