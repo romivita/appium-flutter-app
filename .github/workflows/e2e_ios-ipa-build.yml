@@ -1,0 +1,84 @@
+name: iOS-ipa-build
+
+on:
+  # Triggers the workflow on push to branches named release/**, hotfix/** or develop
+  push:
+    branches: [release/**, hotfix/**, develop]
+
+  # Allows to run the workflow from the Actions tab
+  workflow_dispatch:
+
+env:
+  IOS_APP_CUSTOM_ID: "ShopperIOSApp"
+
+jobs:
+  build-ios:
+    name: iOS Build
+    runs-on: macos-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.22.2
+
+      - run: cd provider_shopper && flutter pub get
+
+      - run: cd provider_shopper && pod repo update
+        working-directory: provider_shopper/ios
+
+      - run: cd provider_shopper && flutter build ios --release --no-codesign
+
+      - run: mkdir Payload
+        working-directory: provider_shopper/build/ios/iphoneos
+
+      - run: mv Runner.app/ Payload
+        working-directory: provider_shopper/build/ios/iphoneos
+
+      - name: Zip output
+        run: zip -qq -r -9 shopper.ipa Payload
+        working-directory: provider_shopper/build/ios/iphoneos
+
+      # Upload generated ipa to project artifacts
+      - name: Upload generated ipa to the artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: shopper.ipa
+          path: provider_shopper/build/ios/iphoneos/
+          retention-days: 1
+          if-no-files-found: error
+
+  e2e-integrationqa-tests-ios:
+      name: e2e integration qa tests
+      needs: build-ios
+      runs-on: ubuntu-latest
+      steps:
+        # Checkout the code
+        - name: Checkout the code
+          uses: actions/checkout@v4
+
+        # Download ipa from project artifacts
+        - name: Download ipa from artifacts
+          id: download
+          uses: actions/download-artifact@v4
+          with:
+            name: shopper.ipa
+            path: provider_shopper/build/ios/iphoneos/
+
+        # Upload generated ipa to BrowserStack
+        - name: Upload ipa to BrowserStack
+          run: |
+          APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@"provider_shopper/build/ios/iphoneos/shopper.ipa"" -F "custom_id="${{ env.IOS_APP_CUSTOM_ID }}"")
+            echo $APP_UPLOAD_RESPONSE
+            APP_URL=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
+            if [ $APP_URL != null ]; then
+              echo "ipa uploaded to BrowserStack with app: $APP_URL";
+            else
+              UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
+              echo "App upload failed, reason: "$UPLOAD_ERROR_MESSAGE
+              exit 1;
+            fi
+
