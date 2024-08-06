@@ -24,6 +24,7 @@ jobs:
         with:
           channel: stable
           flutter-version: 3.22.2
+          architecture: x64
 
       - run: flutter pub get
         working-directory: provider_shopper
@@ -38,18 +39,22 @@ jobs:
         run: rm -rf Payload && mkdir Payload
         working-directory: provider_shopper/build/ios/iphoneos
 
-      - run: mv Runner.app/ Payload
+      - name: Move Runner.app to Payload directory
+        run: mv Runner.app/ Payload
         working-directory: provider_shopper/build/ios/iphoneos
 
-      - name: Zip output
-        run: zip -qq -r -9 shopper.ipa Payload
+      - name: Zip Payload directory
+        run: zip -qq -r Payload.zip Payload
         working-directory: provider_shopper/build/ios/iphoneos
 
-      # Upload generated ipa to project artifacts
-      - name: Upload generated ipa to the artifacts
+      - name: Rename Payload.zip to Payload.ipa
+        run: mv Payload.zip Payload.ipa
+        working-directory: provider_shopper/build/ios/iphoneos
+
+      - name: Upload IPA as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: shopper.ipa
+          name: Payload.ipa
           path: provider_shopper/build/ios/iphoneos/
           retention-days: 1
           if-no-files-found: error
@@ -68,13 +73,13 @@ jobs:
         id: download
         uses: actions/download-artifact@v4
         with:
-          name: shopper.ipa
+          name: Payload.ipa
           path: provider_shopper/build/ios/iphoneos/
 
       # Upload generated ipa to BrowserStack
       - name: Upload ipa to BrowserStack
         run: |
-          APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@"provider_shopper/build/ios/iphoneos/shopper.ipa"" -F "custom_id="${{ env.IOS_APP_CUSTOM_ID }}"")
+          APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@"provider_shopper/build/ios/iphoneos/Payload.ipa"" -F "custom_id="${{ env.IOS_APP_CUSTOM_ID }}"")
           echo $APP_UPLOAD_RESPONSE
           APP_URL=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
           if [ $APP_URL != null ]; then
