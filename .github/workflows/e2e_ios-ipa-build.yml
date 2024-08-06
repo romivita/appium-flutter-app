@@ -86,9 +86,9 @@ jobs:
           fi
 
       # Trigger iOS tests
-      - name: Trigger iOS tests
-        run: >
-          curl -X POST
-          --header "Accept: application/vnd.github.v3+json"
-          https://api.github.com/repos/romivita/shopper_app_testing/actions/workflows/run_regression_tests.yml/dispatches
-          --data '{"ref": "master","inputs": {"operating_system": "ios"}}'
+      - name: Trigger iOS tests 
+        run: |
+          curl -X POST \
+            --header "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/romivita/shopper_app_testing/actions/workflows/run_regression_tests.yml/dispatches \
+            --data '{"ref": "master","inputs": {"operating_system": "ios"}}'
