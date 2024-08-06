@@ -27,8 +27,7 @@ jobs:
 
       - run: cd provider_shopper && flutter pub get
 
-      - run: cd provider_shopper && pod repo update
-        working-directory: ios
+      - run: cd provider_shopper/ios && pod repo update
 
       - run: cd provider_shopper && flutter build ios --release --no-codesign
 
