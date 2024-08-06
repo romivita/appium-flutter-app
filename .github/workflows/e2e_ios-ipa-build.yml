@@ -71,14 +71,14 @@ jobs:
         # Upload generated ipa to BrowserStack
         - name: Upload ipa to BrowserStack
           run: |
-          APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@"provider_shopper/build/ios/iphoneos/shopper.ipa"" -F "custom_id="${{ env.IOS_APP_CUSTOM_ID }}"")
-            echo $APP_UPLOAD_RESPONSE
-            APP_URL=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
-            if [ $APP_URL != null ]; then
-              echo "ipa uploaded to BrowserStack with app: $APP_URL";
-            else
-              UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
-              echo "App upload failed, reason: "$UPLOAD_ERROR_MESSAGE
-              exit 1;
-            fi
+            APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@"provider_shopper/build/ios/iphoneos/shopper.ipa"" -F "custom_id="${{ env.IOS_APP_CUSTOM_ID }}"")
+              echo $APP_UPLOAD_RESPONSE
+              APP_URL=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
+              if [ $APP_URL != null ]; then
+                echo "ipa uploaded to BrowserStack with app: $APP_URL";
+              else
+                UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
+                echo "App upload failed, reason: "$UPLOAD_ERROR_MESSAGE
+                exit 1;
+              fi
 

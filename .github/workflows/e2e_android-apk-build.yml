@@ -37,33 +37,33 @@ jobs:
           path: provider_shopper/build/app/outputs/flutter-apk/
           retention-days: 1
 
-e2e-integrationqa-tests-android:
-    name: e2e integration qa tests
-    needs: build-android
-    runs-on: ubuntu-latest
-    steps:
-      # Checkout the code
-      - name: Checkout the code
-        uses: actions/checkout@v4
+  e2e-integrationqa-tests-android:
+      name: e2e integration qa tests
+      needs: build-android
+      runs-on: ubuntu-latest
+      steps:
+        # Checkout the code
+        - name: Checkout the code
+          uses: actions/checkout@v4
 
-      # Download apk from project artifacts
-      - name: Download apk from artifacts
-        id: download
-        uses: actions/download-artifact@v4
-        with:
-          name: app-debug.apk
-          path: provider_shopper/build/app/outputs/flutter-apk/
+        # Download apk from project artifacts
+        - name: Download apk from artifacts
+          id: download
+          uses: actions/download-artifact@v4
+          with:
+            name: app-debug.apk
+            path: provider_shopper/build/app/outputs/flutter-apk/
 
-      # Upload generated apk to BrowserStack
-      - name: Upload apk to BrowserStack
-        run: |
-          APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@"provider_shopper/build/app/outputs/flutter-apk/app-debug.apk"" -F "custom_id="${{ env.ANDROID_APP_CUSTOM_ID }}"")
-          echo $APP_UPLOAD_RESPONSE
-          APP_URL=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
-          if [ $APP_URL != null ]; then
-            echo "apk uploaded to BrowserStack with app: $APP_URL";
-          else
-            UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
-            echo "App upload failed, reason: "$UPLOAD_ERROR_MESSAGE
-            exit 1;
-          fi
+        # Upload generated apk to BrowserStack
+        - name: Upload apk to BrowserStack
+          run: |
+            APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BS_USERNAME }}:${{ secrets.BS_ACCESS_KEY }}" -X POST "https://api-cloud.browserstack.com/app-automate/upload" -F "file=@"provider_shopper/build/app/outputs/flutter-apk/app-debug.apk"" -F "custom_id="${{ env.ANDROID_APP_CUSTOM_ID }}"")
+            echo $APP_UPLOAD_RESPONSE
+            APP_URL=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
+            if [ $APP_URL != null ]; then
+              echo "apk uploaded to BrowserStack with app: $APP_URL";
+            else
+              UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
+              echo "App upload failed, reason: "$UPLOAD_ERROR_MESSAGE
+              exit 1;
+            fi
