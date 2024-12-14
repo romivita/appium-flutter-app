@@ -2,8 +2,8 @@ name: iOS-ipa-build
 
 on:
   # Triggers the workflow on push to branches named release/**, hotfix/**, develop
-  push:
-    branches: [release/**, hotfix/**, develop]
+  # push:
+  #   branches: [release/**, hotfix/**, develop]
 
   # Allows to run the workflow from the Actions tab
   workflow_dispatch:
@@ -18,12 +18,12 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-      
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.22.2
+          flutter-version: 3.24.5
           architecture: x64
 
       - run: flutter pub get
